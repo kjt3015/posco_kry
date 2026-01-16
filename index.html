@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>업무 안전 등급 진단</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --container-bg: #ffffff;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+            --s-color: #dc3545;
+            --a-color: #ffc107;
+            --b-color: #28a745;
+            --font-size-base: 15px;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e9ecef;
+            --border-color: #343a40;
+        }
+
+        body.large-font { --font-size-base: 19px; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Pretendard', sans-serif;
+            margin: 0; padding: 10px;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .controls button {
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background: var(--container-bg);
+            color: var(--text-color);
+            margin-left: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--font-size-base);
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px 8px;
+            vertical-align: middle;
+        }
+
+        th { background: rgba(0,0,0,0.03); font-weight: bold; }
+
+        /* 업무 분류 열 디자인 */
+        .category-cell {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #666;
+            background: rgba(0,0,0,0.01);
+            width: 70px;
+            text-align: center;
+        }
+        body.dark-mode .category-cell { color: #aaa; }
+
+        .grade-label {
+            font-weight: 900;
+            width: 40px;
+            text-align: center;
+        }
+
+        .check-cell { width: 45px; text-align: center; }
+        
+        input[type="checkbox"] {
+            width: 26px;
+            height: 26px;
+            cursor: pointer;
+        }
+
+        /* 등급별 왼쪽 강조선 */
+        .row-b { border-left: 4px solid var(--b-color); }
+        .row-a { border-left: 4px solid var(--a-color); }
+        .row-s { border-left: 4px solid var(--s-color); }
+
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            margin-top: 20px;
+            background: #004085;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        /* 결과 모달 */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-box {
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            width: 85%;
+            max-width: 350px;
+        }
+
+        #gradeOutput { font-size: 4rem; font-weight: 900; margin: 15px 0; }
+        .btn-close {
+            width: 100%; padding: 12px;
+            background: #495057; color: white; border: none; border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2 style="margin:0; font-size: 1.1rem;">업무 안전 진단 표</h2>
+        <div class="controls">
+            <button onclick="document.body.classList.toggle('dark-mode')">🌓 테마</button>
+            <button onclick="document.body.classList.toggle('large-font')">🔍 글씨</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>등급</th>
+                <th>분류</th>
+                <th>업무 내용</th>
+                <th>선택</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="row-b">
+                <td class="grade-label" rowspan="3" style="color:var(--b-color)">B</td>
+                <td class="category-cell" rowspan="3">인력</td>
+                <td>외부용역 단독, 연구장치 설치/이설/철거</td>
+                <td class="check-cell"><input type="checkbox" class="chk" data-g="B"></td>
+            </tr>
+            <tr class="row-b">
+                <td>천정 크레인, 지게차/그라인더, 고소작업 등</td>
+                <td class="check-cell"><input type="checkbox" class="chk" data-g="B"></td>
+            </tr>
+            <tr class="row-b">
+                <td>화기작업 (폭발, 화재위험 없는 환경)</td>
+                <td class="check-cell"><input type="checkbox" class="chk" data-g="B"></td>
+            </tr>
+
+            <tr class="row-a">
+                <td class="grade-label" rowspan="2" style="color:var(--a-color)">A</td>
+                <td class="category-cell" rowspan="2">인력<br>혼재</td>
+                <td>외부용역 + 전문인력 혼재 (일용직 포함)</td>
+                <td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td>
+            </tr>
+            <tr class="row-a">
+                <td>전기, 토목, 비계 등 작업 혼재 / 재하도</td>
+                <td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td>
+            </tr>
+            <tr class="row-a">
+                <td class="grade-label" style="color:var(--a-color)">A</td>
+                <td class="category-cell">기간</td>
+                <td>15일 이상 설치 / 철거</td>
+                <td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td>
+            </tr>
+            <tr class="row-a">
+                <td class="grade-label" rowspan="6" style="color:var(--a-color)">A</td>
+                <td class="category-cell" rowspan="6">고위험</td>
+                <td>끼임 위험 (구동기기 펜스 내 작업 등)</td>
+                <td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td>
+            </tr>
+            <tr class="row-a"><td>떨어짐 위험 (벽체, 지붕, H빔 등)</td><td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td></tr>
+            <tr class="row-a"><td>화재/폭발 위험 (15m 이내 등)</td><td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td></tr>
+            <tr class="row-a"><td>맞음/부딪힘 위험 (중장비 작업 등)</td><td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td></tr>
+            <tr class="row-a"><td>감전 위험 (고압전기 작업 등)</td><td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td></tr>
+            <tr class="row-a"><td>방사선 사용 / 관리구역 내 작업</td><td class="check-cell"><input type="checkbox" class="chk" data-g="A"></td></tr>
+
+            <tr class="row-s">
+                <td class="grade-label" rowspan="4" style="color:var(--s-color)">S</td>
+                <td class="category-cell" rowspan="4">대형<br>설비</td>
+                <td>대형 설비/연구장치 (팀장 보고 사항)</td>
+                <td class="check-cell"><input type="checkbox" class="chk" data-g="S"></td>
+            </tr>
+            <tr class="row-s"><td>복층 구조물 설치/해체 (H빔 등)</td><td class="check-cell"><input type="checkbox" class="chk" data-g="S"></td></tr>
+            <tr class="row-s"><td>파일시금 / 마이크로파일 설치</td><td class="check-cell"><input type="checkbox" class="chk" data-g="S"></td></tr>
+            <tr class="row-s"><td>질식/중독 위험 (밀폐공간 2hr 등)</td><td class="check-cell"><input type="checkbox" class="chk" data-g="S"></td></tr>
+        </tbody>
+    </table>
+
+    <button class="btn-submit" onclick="getResult()">결과 보기</button>
+</div>
+
+<div id="modal">
+    <div class="modal-box">
+        <h2 style="margin:0; font-size: 1.2rem;">최종 진단 등급</h2>
+        <div id="gradeOutput">-</div>
+        <p style="color:#777; font-size: 0.85rem; margin-bottom: 20px;">선택한 항목 중 가장 높은<br>위험 등급이 산출되었습니다.</p>
+        <button class="btn-close" onclick="closeModal()">확인</button>
+    </div>
+</div>
+
+<script>
+    function getResult() {
+        const chks = document.querySelectorAll('.chk');
+        const map = { 'S': 3, 'A': 2, 'B': 1 };
+        let top = 0;
+        let res = "";
+
+        chks.forEach(c => {
+            if(c.checked) {
+                let score = map[c.dataset.g];
+                if(score > top) { top = score; res = c.dataset.g; }
+            }
+        });
+
+        const out = document.getElementById('gradeOutput');
+        if(top === 0) {
+            out.innerText = "미선택";
+            out.style.color = "#999";
+        } else {
+            out.innerText = res;
+            out.style.color = res === 'S' ? '#dc3545' : (res === 'A' ? '#f39c12' : '#28a745');
+        }
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+</script>
+
+</body>
+</html>
